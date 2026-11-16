@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Shh 🤫</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🐶%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Patrick+Hand&display=swap" rel="stylesheet">
+<!-- This page is the lock. The real site sits encrypted in vault.bin next to it.
+     Built by tools/lock.js: edit tools/gate.html, not docs/index.html.
+     Don't write the game's name anywhere on this page: it's the password. -->
+<style>
+  :root { --ink: #1a1410; --paper: #fff7e8; --pink: #ff3d9a; --gold: #f5a400; --white: #fffdf8; --fur: #e8b25a; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    overflow-x: hidden;
+    background: var(--ink);
+    background-image: radial-gradient(rgba(255, 247, 232, .07) 1.5px, transparent 1.6px);
+    background-size: 22px 22px;
+    font-family: "Patrick Hand", "Comic Sans MS", system-ui, sans-serif;
+    font-size: 1.2rem;
+    color: var(--ink);
+  }
+  .scene { width: min(100%, 420px); display: flex; flex-direction: column; align-items: center; }
+
+  /* ---------- the bouncer ---------- */
+  .dog { width: 250px; height: 227px; margin-bottom: -30px; position: relative; z-index: 1; cursor: pointer; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+  .dog g, .dog path, .dog ellipse, .dog circle { transform-box: fill-box; }
+  #head { transform-origin: 50% 80%; transition: transform .25s ease-out; }
+  .ear { transform-origin: 50% 15%; }
+  .lid { transform-origin: 50% 0; transform: scaleY(0); transition: transform .09s; }
+  .dog.blink .lid { transform: scaleY(1); }
+  .dog.squint .lid { transform: scaleY(.45); }
+  .dog.wide #eyes { transform: scale(1.15); transform-origin: 50% 50%; }
+  #eyes { transition: transform .15s; }
+  .brow { transition: transform .2s; transform-origin: 50% 50%; }
+  .dog.angry #browL { transform: translateY(5px) rotate(14deg); }
+  .dog.angry #browR { transform: translateY(5px) rotate(-14deg); }
+  .dog.sad #browL { transform: translateY(2px) rotate(-14deg); }
+  .dog.sad #browR { transform: translateY(2px) rotate(14deg); }
+  .dog.wide #browL, .dog.wide #browR { transform: translateY(-7px); }
+  .dog .m { display: none; }
+  .dog[data-mouth="smile"] .m-smile, .dog[data-mouth="frown"] .m-frown, .dog[data-mouth="o"] .m-o,
+  .dog[data-mouth="grin"] .m-grin, .dog[data-mouth="flat"] .m-flat, .dog[data-mouth="smirk"] .m-smirk, .dog[data-mouth="snarl"] .m-snarl { display: inline; }
+  .dog[data-mouth="snarl"] .m-snarl { animation: quiver .07s infinite alternate; transform-origin: 50% 50%; }
+  @keyframes quiver { to { transform: translate(.6px, -.8px) scale(1.02); } }
+  .paw { transition: transform .28s cubic-bezier(.3, 1.5, .5, 1); transform: translateY(120px); }
+  .dog.cover .paw { transform: translateY(0); }
+  .dog.cover.peek #pawL { transform: translate(-10px, 26px) rotate(-12deg); }
+  .blush { opacity: 0; transition: opacity .3s; }
+  .dog.blushing .blush { opacity: 1; }
+  .dog.shake #head { animation: shake .55s; }
+  .dog.hop { animation: hop .5s 2; }
+  .dog.flap .ear { animation: flap .25s 4 alternate; }
+  .dog.sniff #nose { animation: sniff .18s infinite alternate; }
+  #vein { opacity: 0; transition: opacity .15s; }
+  .dog.fuming #vein { opacity: 1; animation: throb .3s infinite alternate; }
+  .dog.fuming #face { fill: #e9915a; transition: fill .3s; }
+  #face { transition: fill .6s; }
+  @keyframes throb { to { transform: scale(1.25); } }
+  #vein { transform-origin: 50% 50%; }
+
+  /* the hat */
+  #hat { cursor: grab; touch-action: none; }
+  .dog.hatless #hat { visibility: hidden; }
+  .flyhat { position: fixed; z-index: 5; cursor: grabbing; touch-action: none; filter: drop-shadow(4px 6px 0 rgba(0, 0, 0, .35)); }
+  .flyhat svg { display: block; overflow: visible; }
+  .flyhat.home { transition: left .35s ease-out, top .35s ease-out, transform .35s; }
+  .flyhat.dropped { transition: top .45s cubic-bezier(.5, 0, .8, .4), transform .45s; cursor: default; }
+
+  /* kicked out */
+  #bounced {
+    position: fixed; inset: 0; z-index: 30;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    background: #000; color: var(--paper); text-align: center; padding: 20px;
+    opacity: 0; pointer-events: none; transition: opacity .35s;
+  }
+  #bounced.on { opacity: 1; pointer-events: auto; }
+  #bounced b { font-family: "Luckiest Guy", "Arial Black", sans-serif; font-weight: 400; font-size: clamp(2.4rem, 9vw, 4.4rem); color: var(--pink); letter-spacing: .03em; }
+  #bounced span { font-size: 1.3rem; opacity: .75; }
+  #bounced.on b { animation: slamIn .35s cubic-bezier(.3, 1.6, .5, 1); }
+  @keyframes slamIn { from { transform: scale(2.2) rotate(-8deg); opacity: 0; } }
+  @keyframes shake { 15%, 55% { transform: rotate(-11deg); } 35%, 75% { transform: rotate(11deg); } }
+  @keyframes hop { 40% { transform: translateY(-26px) rotate(-3deg); } }
+  @keyframes flap { to { transform: rotate(-18deg); } }
+  @keyframes sniff { to { transform: translateY(-2px) scale(1.12); } }
+
+  /* ---------- the card ---------- */
+  .card {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    background: var(--paper);
+    border: 4px solid var(--ink);
+    border-radius: 22px;
+    box-shadow: 8px 8px 0 var(--pink);
+    padding: 20px 22px 18px;
+    text-align: center;
+    transform: rotate(-1deg);
+  }
+  .card.shake { animation: cardShake .45s; }
+  @keyframes cardShake { 20%, 60% { transform: translateX(-10px) rotate(-1deg); } 40%, 80% { transform: translateX(10px) rotate(-1deg); } }
+
+  .bubble {
+    position: relative;
+    min-height: 2.6em;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--white);
+    border: 3px solid var(--ink);
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 1.15rem;
+    line-height: 1.2;
+    box-shadow: 3px 3px 0 var(--ink);
+    margin: 4px 0 12px;
+  }
+  .bubble::before {
+    content: ""; position: absolute; top: -11px; left: 50%;
+    width: 16px; height: 16px; margin-left: -8px;
+    background: var(--white);
+    border-left: 3px solid var(--ink); border-top: 3px solid var(--ink);
+    transform: rotate(45deg);
+  }
+  .bubble.pop { animation: pop .3s; }
+  .bubble.bad { background: #ffe1ea; }
+  .bubble.bad::before { background: #ffe1ea; }
+  @keyframes pop { 0% { transform: scale(.85); } 70% { transform: scale(1.05); } }
+
+  h1 {
+    font-family: "Luckiest Guy", "Arial Black", sans-serif;
+    font-weight: 400;
+    font-size: 2.1rem;
+    letter-spacing: .03em;
+    margin: 0;
+    color: var(--pink);
+    text-shadow: 3px 3px 0 var(--ink);
+  }
+  form { margin-top: 12px; display: grid; gap: 10px; }
+  .field { position: relative; }
+  input[type="password"], input[type="text"] {
+    font: inherit;
+    font-size: 1.3rem;
+    padding: 10px 48px;
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    background: var(--white);
+    text-align: center;
+    width: 100%;
+  }
+  input:focus { outline: 3px dashed var(--gold); outline-offset: 3px; }
+  .peekbtn {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    width: 38px; height: 38px;
+    border: 0; background: transparent; font-size: 1.3rem; cursor: pointer; border-radius: 8px;
+  }
+  .peekbtn:hover { background: rgba(26, 20, 16, .08); }
+  button.go {
+    font-family: "Luckiest Guy", "Arial Black", sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: .04em;
+    padding: 12px 14px 8px;
+    background: var(--pink);
+    color: var(--white);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 var(--ink);
+    cursor: pointer;
+    transition: transform .1s;
+  }
+  button.go:hover { transform: translate(-1px, -1px) rotate(-1deg); }
+  button.go:disabled { opacity: .6; cursor: wait; transform: none; }
+  label.remember { font-size: 1.05rem; display: flex; gap: 8px; align-items: center; justify-content: center; cursor: pointer; }
+  label.remember input { width: 18px; height: 18px; accent-color: var(--pink); }
+  .hint { font-size: 1.05rem; opacity: .75; margin: 10px 0 0; transition: all .3s; }
+  .hint.loud { opacity: 1; background: var(--gold); border: 2px solid var(--ink); border-radius: 10px; padding: 2px 8px; display: inline-block; transform: rotate(-2deg) scale(1.06); }
+  .tries { font-size: .95rem; opacity: .6; min-height: 1.2em; margin: 4px 0 0; }
+  .opening form, .opening .hint, .opening .tries { display: none; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 10; width: 100%; height: 100%; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="scene">
+  <svg class="dog" id="dog" viewBox="0 0 220 200" data-mouth="smile" aria-hidden="true">
+    <g id="head">
+      <ellipse class="ear" id="earL" cx="50" cy="112" rx="20" ry="42" fill="#c98a3a" stroke="#1a1410" stroke-width="4"/>
+      <ellipse class="ear" id="earR" cx="170" cy="112" rx="20" ry="42" fill="#c98a3a" stroke="#1a1410" stroke-width="4"/>
+      <circle id="face" cx="110" cy="114" r="62" fill="#e8b25a" stroke="#1a1410" stroke-width="4"/>
+      <path id="tuft" d="M101 55 Q103 40 110 51 Q114 38 120 54" fill="none" stroke="#1a1410" stroke-width="3.5" stroke-linecap="round"/>
+      <!-- security cap (draggable, at your own risk) -->
+      <g id="hat">
+        <path d="M60 84 Q62 40 110 38 Q158 40 160 84 Z" fill="#2b3a67" stroke="#1a1410" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M52 84 L168 84 L182 96 L40 96 Z" fill="#1f2b4f" stroke="#1a1410" stroke-width="4" stroke-linejoin="round"/>
+        <rect x="92" y="50" width="36" height="22" rx="5" fill="#f5a400" stroke="#1a1410" stroke-width="3"/>
+        <text x="110" y="66.5" font-size="12" text-anchor="middle" font-family="Luckiest Guy, Arial Black, sans-serif" fill="#1a1410">VIP</text>
+      </g>
+      <text id="vein" x="160" y="104" font-size="26" text-anchor="middle">💢</text>
+      <g class="blush"><circle cx="70" cy="134" r="8" fill="#ff8fb8"/><circle cx="150" cy="134" r="8" fill="#ff8fb8"/></g>
+      <g id="eyes">
+        <ellipse cx="86" cy="113" rx="13" ry="14" fill="#fff" stroke="#1a1410" stroke-width="3"/>
+        <ellipse cx="134" cy="113" rx="13" ry="14" fill="#fff" stroke="#1a1410" stroke-width="3"/>
+        <circle id="pupL" cx="86" cy="114" r="6.5" fill="#1a1410"/>
+        <circle id="pupR" cx="134" cy="114" r="6.5" fill="#1a1410"/>
+        <ellipse class="lid" cx="86" cy="113" rx="15" ry="16" fill="#e8b25a" stroke="#1a1410" stroke-width="3"/>
+        <ellipse class="lid" cx="134" cy="113" rx="15" ry="16" fill="#e8b25a" stroke="#1a1410" stroke-width="3"/>
+      </g>
+      <path class="brow" id="browL" d="M72 96 Q86 90 99 96" fill="none" stroke="#1a1410" stroke-width="4.5" stroke-linecap="round"/>
+      <path class="brow" id="browR" d="M121 96 Q134 90 148 96" fill="none" stroke="#1a1410" stroke-width="4.5" stroke-linecap="round"/>
+      <ellipse cx="110" cy="146" rx="34" ry="24" fill="#f6d9a0"/>
+      <ellipse id="nose" cx="110" cy="133" rx="11" ry="8" fill="#1a1410"/>
+      <path class="m m-smile" d="M95 150 Q110 161 125 150" fill="none" stroke="#1a1410" stroke-width="3.5" stroke-linecap="round"/>
+      <path class="m m-frown" d="M96 157 Q110 147 124 157" fill="none" stroke="#1a1410" stroke-width="3.5" stroke-linecap="round"/>
+      <ellipse class="m m-o" cx="110" cy="155" rx="6" ry="7.5" fill="#1a1410"/>
+      <path class="m m-flat" d="M98 154 L122 154" fill="none" stroke="#1a1410" stroke-width="3.5" stroke-linecap="round"/>
+      <path class="m m-smirk" d="M97 154 Q114 160 125 148" fill="none" stroke="#1a1410" stroke-width="3.5" stroke-linecap="round"/>
+      <g class="m m-snarl">
+        <path d="M100 124 q4 -4 8 0 M112 124 q4 -4 8 0" fill="none" stroke="#a8702a" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M89 149 Q110 140 131 149 L128 162 Q110 169 92 162 Z" fill="#1a1410"/>
+        <path d="M90 149 L94 160 L98 151 L102 156 L106 151 L110 156 L114 151 L118 156 L122 151 L126 160 L130 149 Q110 141 90 149 Z" fill="#fffdf8" stroke="#1a1410" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M94 163 L97 157 L100 162 L104 158 L108 163 L112 158 L116 163 L120 158 L123 162 L126 157 Q110 170 94 163 Z" fill="#fffdf8" stroke="#1a1410" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M86 147 Q110 136 134 147" fill="none" stroke="#1a1410" stroke-width="3.5" stroke-linecap="round"/>
+      </g>
+      <g class="m m-grin"><path d="M93 148 Q110 172 127 148 Z" fill="#1a1410"/><path d="M104 158 Q110 176 117 158 Z" fill="#ff6fa8" stroke="#1a1410" stroke-width="2"/></g>
+    </g>
+    <g class="paw" id="pawL"><ellipse cx="84" cy="116" rx="24" ry="19" fill="#e8b25a" stroke="#1a1410" stroke-width="4"/><path d="M75 106 v10 M84 104 v12 M93 106 v10" stroke="#c98a3a" stroke-width="3" stroke-linecap="round"/></g>
+    <g class="paw" id="pawR"><ellipse cx="136" cy="116" rx="24" ry="19" fill="#e8b25a" stroke="#1a1410" stroke-width="4"/><path d="M127 106 v10 M136 104 v12 M145 106 v10" stroke="#c98a3a" stroke-width="3" stroke-linecap="round"/></g>
+  </svg>
+
+  <main class="card" id="card">
+    <div class="bubble" id="say" aria-live="polite">Evening. Name's not on the list? Password, then.</div>
+    <h1>Members only</h1>
+    <form id="form" autocomplete="off">
+      <div class="field">
+        <label class="sr" for="pw">Password</label>
+        <input type="password" id="pw" placeholder="Password" autocapitalize="off" spellcheck="false">
+        <button type="button" class="peekbtn" id="peek" aria-label="Show password" title="Show password">👁️</button>
+      </div>
+      <button type="submit" class="go" id="go">Let me in</button>
+      <label class="remember"><input type="checkbox" id="remember" checked> Remember me on this device</label>
+    </form>
+    <p class="hint" id="hint">Hint: it's the name of the game.</p>
+    <p class="tries" id="tries"></p>
+  </main>
+</div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div id="bounced" role="alert"><b>BOUNCED. 🚪</b><span>Think about what you did.</span></div>
+<script>
+(() => {
+  "use strict";
+  const SALT = "a7c0fa237525e84060eb63f87163b885";
+  const ITER = 250000;
+  const STORE = "vault-key-2"; // change this name to make every remembered device ask again
+  const $ = (id) => document.getElementById(id);
+  const card = $("card"), form = $("form"), pw = $("pw"), go = $("go"), bubble = $("say");
+  const dog = $("dog"), head = $("head"), pupL = $("pupL"), pupR = $("pupR");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+  /* ================= the bouncer's acting ================= */
+  let moodTimer = 0;
+  function say(text, bad = false) {
+    bubble.textContent = text;
+    bubble.classList.toggle("bad", bad);
+    bubble.classList.remove("pop");
+    void bubble.offsetWidth;
+    bubble.classList.add("pop");
+  }
+  function mood(name, mouth, ms = 0) {
+    dog.classList.remove("angry", "sad", "wide", "squint", "blushing", "fuming");
+    if (name) name.split(" ").forEach((c) => dog.classList.add(c));
+    dog.dataset.mouth = mouth || "smile";
+    clearTimeout(moodTimer);
+    if (ms) moodTimer = setTimeout(() => mood("", covering() ? "flat" : "smile"), ms);
+  }
+  function once(cls, ms) {
+    dog.classList.remove(cls);
+    void dog.getBoundingClientRect();
+    dog.classList.add(cls);
+    setTimeout(() => dog.classList.remove(cls), ms);
+  }
+  const covering = () => dog.classList.contains("cover");
+
+  // eyes (and a little head tilt) follow the pointer
+  let lookX = innerWidth / 2, lookY = innerHeight * 0.75;
+  function aim() {
+    const r = dog.getBoundingClientRect();
+    const s = r.width / 220;
+    [[pupL, 86], [pupR, 134]].forEach(([p, cx]) => {
+      const ex = r.left + cx * s, ey = r.top + 114 * s;
+      const dx = lookX - ex, dy = lookY - ey;
+      const d = Math.hypot(dx, dy) || 1;
+      const k = Math.min(6, d / 30);
+      p.setAttribute("transform", `translate(${(dx / d * k).toFixed(2)} ${(dy / d * k).toFixed(2)})`);
+    });
+    const tilt = Math.max(-9, Math.min(9, (lookX - (r.left + r.width / 2)) / 40));
+    head.style.transform = reduced ? "" : `rotate(${tilt.toFixed(1)}deg)`;
+  }
+  let lastMove = 0, lastX = 0, lastY = 0, speedNag = 0, busy = false, capsTold = false;
+  addEventListener("pointermove", (e) => {
+    const now = performance.now();
+    const v = Math.hypot(e.clientX - lastX, e.clientY - lastY) / Math.max(1, now - lastMove);
+    lastX = e.clientX; lastY = e.clientY; lastMove = now;
+    lookX = e.clientX; lookY = e.clientY;
+    aim();
+    poke();
+    if (v > 4 && now - speedNag > 15000 && !busy && !covering() && !hatGone && !bounced) {
+      speedNag = now;
+      say(pick(["Whoa, easy with the mouse.", "Dizzy now. Thanks.", "Are you okay? That was very fast."]));
+      mood("wide", "o", 1200);
+    }
+  });
+  addEventListener("resize", aim);
+  document.documentElement.addEventListener("mouseleave", () => {
+    if (!busy && !covering() && !hatGone && !bounced) { say(pick(["Hey. Where are you going?", "Leaving already? Rude.", "I can still see you, you know."])); mood("sad", "frown", 1600); }
+  });
+
+  // blinking: quick, never stuck shut
+  (function blink() {
+    setTimeout(() => { if (!covering()) once("blink", 130); blink(); }, 2200 + Math.random() * 2800);
+  })();
+
+  // getting bored
+  let idleTimer = 0;
+  function poke() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      if (busy) return;
+      say(pick(["Any day now…", "I've got all night. Literally, it's my job.", "Still here. Still waiting.", "*yawns in security*"]));
+      mood("squint", "o", 1600);
+    }, 12000);
+  }
+  poke();
+
+  // sound, made on the spot (only ever after a click, so browsers allow it)
+  let ac = null;
+  function audio() {
+    if (!ac) try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+    if (ac.state === "suspended") ac.resume();
+    return ac;
+  }
+  // the real recordings, trimmed to the good bit: [file, start (s), length (s)]
+  const CLIPS = {
+    bark: ["sfx/dog-bark.mp3", 0.06, 0.30],
+    growl: ["sfx/dog-growl.mp3", 0.12, 0.80],
+    slam: ["sfx/door-closing.mp3", 2.40, 1.40],
+  };
+  const buffers = {};
+  for (const [k, [file]] of Object.entries(CLIPS)) {
+    fetch(file).then((r) => (r.ok ? r.arrayBuffer() : null))
+      .then((b) => b && new OfflineAudioContext(1, 1, 44100).decodeAudioData(b))
+      .then((buf) => { if (buf) buffers[k] = buf; })
+      .catch(() => {});
+  }
+  // plays a clip; false if it isn't loaded (then the synthesised sound is used instead)
+  function clip(name, delay = 0, rate = 1, vol = 1) {
+    const a = audio(), buf = buffers[name];
+    if (!a || !buf) return false;
+    const [, off, len] = CLIPS[name];
+    const t = a.currentTime + delay, end = t + len / rate;
+    const src = a.createBufferSource(), g = a.createGain();
+    src.buffer = buf;
+    src.playbackRate.value = rate;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.setValueAtTime(vol, Math.max(t, end - 0.12));
+    g.gain.linearRampToValueAtTime(0.0001, end); // fade out instead of a click
+    src.connect(g).connect(a.destination);
+    src.start(t, off, len);
+    return true;
+  }
+
+  function woof(delay = 0, pitch = 1) {
+    if (clip("bark", delay, pitch)) return;
+    const a = audio(); if (!a) return;
+    const t = a.currentTime + delay;
+    const o = a.createOscillator(), f = a.createBiquadFilter(), g = a.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(420 * pitch, t);
+    o.frequency.exponentialRampToValueAtTime(150 * pitch, t + 0.16);
+    f.type = "lowpass"; f.frequency.value = 1300; f.Q.value = 6;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+    o.connect(f).connect(g).connect(a.destination);
+    o.start(t); o.stop(t + 0.22);
+  }
+  function growl() {
+    if (clip("growl", 0, 1, 1.2)) return;
+    const a = audio(); if (!a) return;
+    const t = a.currentTime;
+    const o = a.createOscillator(), lfo = a.createOscillator(), lg = a.createGain(), g = a.createGain(), f = a.createBiquadFilter();
+    o.type = "sawtooth"; o.frequency.value = 85;
+    lfo.frequency.value = 22; lg.gain.value = 0.12;
+    lfo.connect(lg).connect(g.gain);
+    f.type = "lowpass"; f.frequency.value = 500;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.18, t + 0.1);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+    o.connect(f).connect(g).connect(a.destination);
+    o.start(t); lfo.start(t); o.stop(t + 0.85); lfo.stop(t + 0.85);
+  }
+  function slam() {
+    if (clip("slam")) return;
+    const a = audio(); if (!a) return;
+    const t = a.currentTime;
+    const n = Math.floor(a.sampleRate * 0.35), buf = a.createBuffer(1, n, a.sampleRate), ch = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
+    const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    s.buffer = buf; f.type = "lowpass"; f.frequency.value = 260; g.gain.value = 1.6;
+    s.connect(f).connect(g).connect(a.destination);
+    s.start(t);
+  }
+
+  // getting kicked out: snarl, barks, door slam, three seconds of darkness, then a calmer dog
+  let boops = 0, bounced = false;
+  function bounce(calmLine, whileDark) {
+    bounced = true;
+    say("THAT'S IT. YOU'RE OUT. 🚪", true);
+    mood("angry squint fuming", "snarl");
+    growl();
+    woof(0.5, 1.15); woof(0.7, 1.1); woof(0.9, 1.2);
+    const out = $("bounced");
+    setTimeout(() => { out.classList.add("on"); slam(); }, 900);
+    setTimeout(() => { if (whileDark) whileDark(); }, 1400);
+    setTimeout(() => {
+      out.classList.remove("on");
+      boops = 0;
+      bounced = false;
+      say(calmLine);
+      mood("sad blushing", "smile", 3500);
+    }, 900 + 3000 + 400);
+  }
+
+  // boop. Then annoyed. Then angry. Then you're out.
+  const CUTE = ["Boop! Rude.", "Please don't boop the security.", "That's assault. Of a very cute kind.", "Okay, that's enough booping.", "I'm writing this down."];
+  const ANNOYED = ["Seriously?", "I'm counting, you know.", "Hands where I can see them.", "Strike… I've lost count. That's bad for you."];
+  const ANGRY = ["WOOF! Okay, NOW I'm mad.", "Grrrr. Stop it.", "WOOF WOOF!", "I have a whistle and I'm not afraid to use it.", "Do you KNOW who I am? Security!",
+    "Grrrrr. That's a formal warning.", "I'm calling my manager. He's also a dog.", "Grrr… my therapist will hear about this.", "LAST. WARNING.", "Grrrr… I mean it. One more."];
+  let skipClick = false;
+  dog.addEventListener("click", () => {
+    if (skipClick) { skipClick = false; return; } // that was a hat grab, not a boop
+    if (bounced || hatGone) return;
+    boops++;
+    poke();
+    if (boops < 10) {
+      once("hop", 1000);
+      if (boops <= CUTE.length) { say(CUTE[boops - 1]); mood("wide blushing", boops > 3 ? "flat" : "grin", 1300); }
+      else { say(ANNOYED[boops - CUTE.length - 1]); mood("squint", "flat", 1600); }
+      return;
+    }
+    if (boops < 20) {
+      say(ANGRY[boops - 10], true);
+      const growling = boops >= 15 && boops % 2;
+      mood("angry squint fuming", growling ? "snarl" : boops % 2 ? "flat" : "o", growling ? 1500 : 2600);
+      once("shake", 600);
+      once("flap", 1000);
+      card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+      if (growling) growl();
+      else { woof(0, 1 + (boops - 10) * 0.03); if (boops >= 13) woof(0.22, 0.95 + (boops - 10) * 0.03); }
+      return;
+    }
+    bounce("Okay. I'm calm now. 🧘 Let's try that again.");
+  });
+
+  // the hat: grab it and the dog is NOT amused
+  const hat = $("hat");
+  let hatGone = false, fly = null, grab = null;
+  function hatHome() {
+    const r = dog.getBoundingClientRect(), s = r.width / 220;
+    return { left: r.left + 36 * s, top: r.top + 34 * s, width: 150 * s, height: 66 * s };
+  }
+  function putHatBack(animate) {
+    if (!fly) { dog.classList.remove("hatless"); return; }
+    const h = hatHome(), f = fly;
+    fly = null;
+    if (animate) {
+      f.classList.add("home");
+      Object.assign(f.style, { left: h.left + "px", top: h.top + "px", transform: "none" });
+      setTimeout(() => { f.remove(); dog.classList.remove("hatless"); }, 380);
+    } else {
+      f.remove();
+      dog.classList.remove("hatless");
+    }
+    hatGone = false;
+  }
+  hat.addEventListener("pointerdown", (e) => {
+    if (bounced || busy || fly) return;
+    e.preventDefault();
+    e.stopPropagation();
+    skipClick = true;
+    audio(); // the sounds need a click to be allowed
+    const h = hatHome();
+    head.style.transform = "";
+    fly = document.createElement("div");
+    fly.className = "flyhat";
+    fly.innerHTML = `<svg viewBox="36 34 150 66" width="100%" height="100%">${hat.innerHTML}</svg>`;
+    Object.assign(fly.style, { left: h.left + "px", top: h.top + "px", width: h.width + "px", height: h.height + "px" });
+    document.body.appendChild(fly);
+    dog.classList.add("hatless");
+    hatGone = true;
+    grab = { dx: e.clientX - h.left, dy: e.clientY - h.top, x0: h.left, y0: h.top, lastX: e.clientX, warned: 0 };
+    fly.setPointerCapture(e.pointerId);
+    fly.addEventListener("pointermove", dragHat);
+    fly.addEventListener("pointerup", dropHat, { once: true });
+    fly.addEventListener("pointercancel", dropHat, { once: true });
+    say("HEY! That's my hat!", true);
+    mood("wide angry", "o");
+    woof();
+  });
+  function dragHat(e) {
+    if (!grab || !fly) return;
+    const x = e.clientX - grab.dx, y = e.clientY - grab.dy;
+    const tilt = Math.max(-25, Math.min(25, (e.clientX - grab.lastX) * 1.5));
+    grab.lastX = e.clientX;
+    Object.assign(fly.style, { left: x + "px", top: y + "px", transform: `rotate(${tilt}deg)` });
+    lookX = e.clientX; lookY = e.clientY;
+    aim();
+    const dist = Math.hypot(x - grab.x0, y - grab.y0);
+    if (dist > 90 && grab.warned < 1) {
+      grab.warned = 1;
+      say("Don't look at my hair! Put. It. Back.", true);
+      mood("angry squint fuming blushing", "flat");
+      woof(0, 1.05); woof(0.22, 1.1);
+    } else if (dist > 220 && grab.warned < 2) {
+      grab.warned = 2;
+      say("Grrrrr… I'm warning you.", true);
+      mood("angry squint fuming", "snarl");
+      growl();
+      once("shake", 600);
+    }
+  }
+  function dropHat() {
+    if (!fly || !grab) return;
+    fly.removeEventListener("pointermove", dragHat);
+    const r = fly.getBoundingClientRect();
+    const dist = Math.hypot(r.left - grab.x0, r.top - grab.y0);
+    grab = null;
+    setTimeout(() => (skipClick = false), 0);
+    if (dist < 70) {
+      putHatBack(true);
+      say("…Thank you. Never touch the hat.");
+      mood("squint", "flat", 2000);
+      return;
+    }
+    // dropped it somewhere else: it falls, and you are done here
+    fly.classList.add("dropped");
+    Object.assign(fly.style, { top: r.top + 40 + "px", transform: "rotate(160deg)" });
+    say("WOOF! You DROPPED it?!", true);
+    mood("angry squint fuming", "o");
+    woof(0, 1.1); woof(0.2, 1.15);
+    once("shake", 600);
+    setTimeout(() => bounce("Okay. I'm calm now. 🧘 Hat's back on. Let's try that again.", () => putHatBack(false)), 1200);
+  }
+
+  // the dog covers its eyes only when the password is actually visible
+  let shown = false, keys = 0;
+  function cover(on) {
+    dog.classList.toggle("cover", on && shown);
+    if (!on || !shown) dog.classList.remove("peek");
+  }
+  pw.addEventListener("focus", () => {
+    if (busy) return;
+    lookFromInput();
+    if (shown) { cover(true); mood("", "flat"); }
+    else if (!pw.value) say(pick(["Go on. It's all dots to me anyway.", "Type away. I only see dots.", "Dots, dots, dots. Very mysterious."]));
+  });
+  pw.addEventListener("blur", () => { cover(false); mood("", "smile"); });
+  function lookFromInput() {
+    const r = pw.getBoundingClientRect();
+    lookX = r.left + Math.min(r.width - 40, 50 + pw.value.length * 11);
+    lookY = r.top + r.height / 2;
+    aim();
+  }
+  pw.addEventListener("keydown", (e) => {
+    if (e.getModifierState && e.getModifierState("CapsLock") && !capsTold) {
+      capsTold = true;
+      say("CAPS LOCK is on. Relax, I don't care about capitals.");
+    }
+  });
+  pw.addEventListener("input", () => {
+    poke();
+    lookFromInput();
+    keys++;
+    const n = pw.value.length;
+    if (n === 0) { say("Deleted it all. Cold feet?"); return; }
+    if (shown) {
+      // it can be read now, so: paws up (with the odd peek)
+      cover(true);
+      if (keys % 5 === 0) {
+        dog.classList.add("peek");
+        say(pick(["👀 …I saw nothing.", "Not looking. Definitely not looking.", "Was that a… no. Not looking.", "My eyes are closed. Mostly."]));
+        setTimeout(() => dog.classList.remove("peek"), 700);
+      }
+      return;
+    }
+    // only dots: the dog watches, thoroughly unimpressed
+    if (n === 16) say("That's a long one. Ambitious.");
+    else if (n === 30) say("Are you typing an essay?");
+    else if (keys % 6 === 0) say(pick(["Dot. Dot. Dot. Riveting.", "I can only see dots. Nice dots, though.", "Very secure dots.", `Counting dots… ${n}.`]));
+  });
+  $("peek").addEventListener("click", () => {
+    shown = !shown;
+    pw.type = shown ? "text" : "password";
+    $("peek").textContent = shown ? "🙈" : "👁️";
+    $("peek").setAttribute("aria-label", shown ? "Hide password" : "Show password");
+    pw.focus();
+    if (shown) { cover(true); say("Whoa, it's showing! Eyes closed, eyes closed! 🙈"); mood("blushing", "flat"); }
+    else { cover(false); say("Back to dots. Phew, I can look again."); mood("", "smile"); }
+    lookFromInput();
+  });
+
+  /* ================= the lock itself ================= */
+  const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const hex = (h) => new Uint8Array(h.match(/../g).map((b) => parseInt(b, 16)));
+  const toB64 = (u) => btoa(String.fromCharCode.apply(null, u));
+  const fromB64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  const store = {
+    get() { try { return localStorage.getItem(STORE); } catch (e) { return null; } },
+    set(v) { try { localStorage.setItem(STORE, v); } catch (e) { /* private mode */ } },
+    clear() { try { localStorage.removeItem(STORE); } catch (e) { /* private mode */ } },
+  };
+  if (/[?&]lock\b/.test(location.search)) store.clear(); // add ?lock to the address to forget this device
+
+  if (!window.crypto || !crypto.subtle) {
+    form.hidden = true;
+    say("This door needs a secure (https) connection and an up-to-date browser.", true);
+    mood("sad", "frown");
+    return;
+  }
+
+  // start downloading the vault while the password is being typed
+  const vault = fetch("vault.bin", { cache: "no-cache" }).then((r) => {
+    if (!r.ok) throw new Error("vault " + r.status);
+    return r.arrayBuffer();
+  });
+  vault.catch(() => {});
+
+  async function derive(password) {
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(norm(password)), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: hex(SALT), iterations: ITER, hash: "SHA-256" }, base, 256);
+    return new Uint8Array(bits);
+  }
+  async function open(raw) {
+    const buf = new Uint8Array(await vault);
+    const key = await crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["decrypt"]);
+    // throws if the key is wrong
+    return new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: buf.subarray(0, 12) }, key, buf.subarray(12)));
+  }
+  function launch(plain) {
+    const view = new DataView(plain.buffer, plain.byteOffset, plain.byteLength);
+    const headLen = view.getUint32(0, true);
+    const head = JSON.parse(new TextDecoder().decode(plain.subarray(4, 4 + headLen)));
+    const urls = {};
+    let html = "";
+    let off = 4 + headLen;
+    for (const f of head.files) {
+      const bytes = plain.subarray(off, off + f.n);
+      off += f.n;
+      if (f.p === head.entry) html = new TextDecoder().decode(bytes);
+      else urls[f.p] = URL.createObjectURL(new Blob([bytes], { type: f.t }));
+    }
+    // point the page at the decrypted copies
+    html = html.replace(/\b(src|href)="([^"#?:]+)"/g, (m, attr, p) => (urls[p] ? `${attr}="${urls[p]}"` : m));
+    const boot = "<script>window.TE_URL=(function(m){return function(p){return m[p]||p;};})(" + JSON.stringify(urls) + ");<\/script>";
+    html = html.replace(/<head[^>]*>/i, (m) => m + boot);
+    document.open();
+    document.write(html);
+    document.close();
+  }
+
+  /* ---------- confetti for the lucky ones ---------- */
+  function confetti() {
+    if (reduced) return;
+    const c = $("confetti"), ctx = c.getContext("2d");
+    c.width = innerWidth; c.height = innerHeight;
+    const r = dog.getBoundingClientRect();
+    const cols = ["#ff3d9a", "#f5a400", "#2a9d8f", "#fffdf8", "#7bc96f"];
+    const bits = Array.from({ length: 140 }, () => ({
+      x: r.left + r.width / 2, y: r.top + r.height / 2,
+      vx: (Math.random() - .5) * 16, vy: -Math.random() * 15 - 4,
+      w: 6 + Math.random() * 6, h: 4 + Math.random() * 4, a: Math.random() * 6, va: (Math.random() - .5) * .4,
+      c: cols[Math.floor(Math.random() * cols.length)],
+    }));
+    (function frame() {
+      ctx.clearRect(0, 0, c.width, c.height);
+      let alive = false;
+      for (const b of bits) {
+        b.vy += .45; b.x += b.vx; b.y += b.vy; b.a += b.va; b.vx *= .99;
+        if (b.y < c.height + 20) alive = true;
+        ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.a); ctx.fillStyle = b.c; ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); ctx.restore();
+      }
+      if (alive) requestAnimationFrame(frame);
+    })();
+  }
+
+  /* ---------- a device that has been here before goes straight in ---------- */
+  const saved = store.get();
+  if (saved) {
+    busy = true;
+    card.classList.add("opening");
+    say("Oh, it's you again! Come on in. 🎉");
+    mood("wide blushing", "grin");
+    open(fromB64(saved)).then((plain) => setTimeout(() => launch(plain), 700)).catch(() => {
+      store.clear();
+      busy = false;
+      card.classList.remove("opening");
+      say("Hm. Your wristband expired. Password again, please.");
+      mood("", "smirk");
+    });
+  }
+
+  /* ---------- trying the door ---------- */
+  let wrong = 0;
+  const WRONG = [
+    "Nope. Bold guess, though.",
+    "Wrong. I'm a dog and even I know that.",
+    "Still no. Did you read the hint? It's right there. ⬇️",
+    "Incorrect. I'm starting to enjoy this.",
+    "Nope. Should I get you a chair?",
+    "No. I'm telling the birthday girl.",
+    "Wrong again. This is my favourite part of the job.",
+    "Okay, I feel bad now. It's the name of the GAME. The card game.",
+  ];
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    if (!pw.value.trim()) {
+      say(pick(["You typed nothing. Bold strategy.", "Blank? Interesting choice.", "That's… an empty box."]));
+      mood("squint", "smirk", 1500);
+      once("shake", 600);
+      pw.focus();
+      return;
+    }
+    busy = true;
+    go.disabled = true;
+    cover(false);
+    say("Checking the list… 👃");
+    mood("squint", "o");
+    dog.classList.add("sniff");
+    let raw;
+    try {
+      raw = await derive(pw.value);
+      const plain = await open(raw);
+      dog.classList.remove("sniff");
+      if ($("remember").checked) store.set(toB64(raw));
+      say(pick(["Oh! You ARE on the list. Come in, come in! 🎉", "Correct! Sorry about all that. Welcome! 🎉", "Right this way, VIP. 🎉"]));
+      mood("wide blushing", "grin");
+      once("hop", 1000);
+      once("flap", 1000);
+      confetti();
+      setTimeout(() => launch(plain), reduced ? 300 : 1300);
+    } catch (err) {
+      dog.classList.remove("sniff");
+      busy = false;
+      go.disabled = false;
+      if (err && err.name === "OperationError") {
+        wrong++;
+        say(WRONG[Math.min(wrong - 1, WRONG.length - 1)], true);
+        mood(wrong > 4 ? "sad" : "angry squint", wrong > 4 ? "frown" : "smirk", 2200);
+        once("shake", 600);
+        once("flap", 1000);
+        card.classList.remove("shake");
+        void card.offsetWidth;
+        card.classList.add("shake");
+        if (wrong >= 3) $("hint").classList.add("loud");
+        $("tries").textContent = wrong >= 2 ? `Wrong guesses: ${wrong}. The bouncer is counting.` : "";
+        pw.select();
+      } else {
+        say("Couldn't reach the guest list. Check your connection and try again.", true);
+        mood("sad", "frown", 2500);
+      }
+    }
+  });
+
+  aim();
+})();
+</script>
+</body>
+</html>
